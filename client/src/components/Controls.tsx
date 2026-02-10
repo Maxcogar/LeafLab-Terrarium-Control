@@ -138,7 +138,7 @@ function Toggle({ label, checked, onChange }: { label: string, checked: boolean,
   );
 }
 
-function Slider({ label, value, max, unit, onChange, color }: any) {
+function Slider({ label, value, max, unit, onChange, color }: { label: string, value: number, max: number, unit: string, onChange: (v: number) => void, color?: string }) {
   // Local state for smooth dragging, commit on mouseUp/touchEnd could be better but simplified here
   // Actually, for immediate feedback usually we want `onChange` to fire. 
   // But sending serial commands on every drag event is bad (floods buffer).
