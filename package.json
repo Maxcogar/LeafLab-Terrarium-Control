@@ -1,0 +1,14 @@
+{
+  "name": "leaflab-rpi-companion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:mock": "concurrently \"npm run dev:mock --prefix server\" \"npm run dev --prefix client\" \"node scripts/mock_esp32.mjs\"",
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "deploy": "bash scripts/deploy.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
