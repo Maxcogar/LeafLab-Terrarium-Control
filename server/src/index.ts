@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -6,6 +8,8 @@ import cors from 'cors';
 import { SerialManager } from './serial.js';
 import { StorageManager } from './db.js';
 import { TelemetryPacket, SerialCommand } from './types.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.PORT || 3333;
 const SERIAL_PORT = process.env.SERIAL_PORT || '/dev/ttyUSB0';
@@ -110,6 +114,14 @@ app.post('/api/_mock/telemetry', (req, res) => {
   const packet: TelemetryPacket = req.body;
   handleTelemetry(packet);
   res.json({ ok: true });
+});
+
+// Serve client build in production
+const clientDist = path.resolve(__dirname, '../../client/dist');
+app.use(express.static(clientDist));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next();
+  res.sendFile(path.join(clientDist, 'index.html'));
 });
 
 io.on('connection', (socket) => {
