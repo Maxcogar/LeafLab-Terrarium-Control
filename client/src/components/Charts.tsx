@@ -134,7 +134,6 @@ export function Charts() {
                 fillOpacity={1}
                 fill={`url(#color${i})`}
                 strokeWidth={2}
-                connectNulls
                 name={k.replace(/([A-Z])/g, ' $1').trim()} // naive pretty print
               />
             ))}

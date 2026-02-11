@@ -8,6 +8,44 @@ const REQUIRED_SENSOR_KEYS = [
   'light', 'soilTemp', 'tds', 'ph', 'heaterTemp'
 ];
 
+const REQUIRED_OUTPUT_FIELDS: [string, string][] = [
+  ['fanSpeed', 'number'], ['heaterPower', 'number'],
+  ['servo1Angle', 'number'], ['servo2Angle', 'number'],
+  ['growLights', 'boolean'], ['waterPump', 'boolean'],
+  ['humidifier1', 'boolean'], ['humidifier2', 'boolean'],
+];
+
+const REQUIRED_SYSTEM_FIELDS: [string, string][] = [
+  ['uptime', 'number'], ['freeHeap', 'number'],
+  ['wifiRssi', 'number'], ['wifiConnected', 'boolean'],
+  ['mqttConnected', 'boolean'], ['ntpSynced', 'boolean'],
+  ['currentHour', 'number'], ['firmwareVersion', 'string'],
+];
+
+const REQUIRED_CONTROL_FIELDS: [string, string][] = [
+  ['ventMode', 'number'], ['pumpRunning', 'boolean'],
+  ['manualOverride', 'boolean'], ['loopCount', 'number'],
+];
+
+const REQUIRED_CONFIG_FIELDS: [string, string][] = [
+  ['heaterTarget', 'number'], ['heaterHysteresis', 'number'],
+  ['humidityLow', 'number'], ['humidityHigh', 'number'],
+  ['humidityReturn', 'number'], ['tempVentTrigger', 'number'],
+  ['tempVentReturn', 'number'], ['soilMoistureLow', 'number'],
+  ['soilMoistureHigh', 'number'], ['lightsOnHour', 'number'],
+  ['lightsOffHour', 'number'], ['overrideTimeoutMs', 'number'],
+  ['loopIntervalMs', 'number'],
+];
+
+function checkFields(section: Record<string, any>, fields: [string, string][], sectionName: string): string | null {
+  for (const [key, expectedType] of fields) {
+    if (typeof section[key] !== expectedType) {
+      return `${sectionName}.${key}: expected ${expectedType}, got ${typeof section[key]}`;
+    }
+  }
+  return null;
+}
+
 /**
  * Validate that a parsed JSON object has the shape of a complete TelemetryPacket.
  * Returns null if valid, or a string describing what's missing.
@@ -25,6 +63,12 @@ export function validatePacket(obj: any): string | null {
       return `missing or malformed sensor "${key}"`;
     }
   }
+
+  let err: string | null;
+  if ((err = checkFields(obj.outputs, REQUIRED_OUTPUT_FIELDS, 'outputs'))) return err;
+  if ((err = checkFields(obj.system, REQUIRED_SYSTEM_FIELDS, 'system'))) return err;
+  if ((err = checkFields(obj.control, REQUIRED_CONTROL_FIELDS, 'control'))) return err;
+  if ((err = checkFields(obj.config, REQUIRED_CONFIG_FIELDS, 'config'))) return err;
 
   return null;
 }

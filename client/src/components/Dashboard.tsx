@@ -11,6 +11,8 @@ export function Dashboard() {
 
   const { sensors, outputs } = telemetry;
 
+  if (!sensors || !outputs) return <div className="p-10 text-center text-muted">Waiting for full telemetry...</div>;
+
   return (
     <div className="grid grid-cols-3 gap-6 h-full">
       {/* Column 1: Primary Climate */}
