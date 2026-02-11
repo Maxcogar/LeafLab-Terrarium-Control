@@ -8,7 +8,7 @@ interface StoreState {
   serialConnected: boolean;
   backendConnected: boolean;
   sparklines: Record<string, number[]>; // key -> array of values
-  activeTab: 'dashboard' | 'charts' | 'controls' | 'settings';
+  activeTab: 'dashboard' | 'charts' | 'controls' | 'settings' | 'sandbox';
   
   socket: Socket | null;
   connect: () => void;

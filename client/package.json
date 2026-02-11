@@ -11,10 +11,12 @@
   "dependencies": {
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
+    "framer-motion": "^12.34.0",
     "leaflab-rpi-companion": "file:..",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-water-wave": "^2.0.1",
     "recharts": "^2.12.0",
     "socket.io-client": "^4.7.4",
     "tailwind-merge": "^2.2.1",

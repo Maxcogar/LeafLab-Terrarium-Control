@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.1), 
+                 0 0 8px currentColor;
+  }
+  
+  .text-glow-sm {
+    text-shadow: 0 0 4px currentColor;
+  }
+
+  .text-glow-lg {
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.2),
+                 0 0 15px currentColor;
+  }
+
+  .box-glow {
+    box-shadow: 0 0 15px currentColor;
+  }
+}

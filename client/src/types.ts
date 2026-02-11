@@ -82,3 +82,13 @@ export interface SerialResponse {
   message?: string;
   error?: string;
 }
+
+export interface DBEvent {
+  id: number;
+  timestamp: number;
+  type: string;
+  source: string;
+  message: string;
+  severity: number;
+  data?: any;
+}

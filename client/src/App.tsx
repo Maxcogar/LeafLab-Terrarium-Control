@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import { useStore } from './store';
-import { LayoutDashboard, LineChart, Sliders, Settings as SettingsIcon, WifiOff, Usb } from 'lucide-react';
+import { LayoutDashboard, LineChart, Sliders, Settings as SettingsIcon, WifiOff, Usb, TestTube2 } from 'lucide-react';
 import clsx from 'clsx';
 import { Dashboard } from './components/Dashboard';
 import { Charts } from './components/Charts';
 import { Controls } from './components/Controls';
 import { Settings } from './components/Settings';
+import { Sandbox } from './components/Sandbox';
+import { WaterOverlay } from './components/ui/WaterOverlay';
 
 function App() {
   const { connect, backendConnected, serialConnected, activeTab, setActiveTab, lastPacketAt } = useStore();
@@ -17,9 +19,10 @@ function App() {
   const isStale = lastPacketAt ? (Date.now() - lastPacketAt > 15000) : false;
 
   return (
-    <div className="flex h-screen bg-background text-text font-sans selection:bg-primary selection:text-background">
+    <div className="flex h-full bg-background text-text font-sans selection:bg-primary selection:text-background relative">
+      <WaterOverlay />
       {/* Sidebar / Navigation */}
-      <nav className="w-24 bg-surface flex flex-col items-center py-6 border-r border-gray-800 shrink-0">
+      <nav className="w-24 bg-surface/80 backdrop-blur-sm flex flex-col items-center py-6 border-r border-gray-800 shrink-0 z-10">
         <div className="mb-8 p-2 bg-primary/20 rounded-full">
           <div className="w-8 h-8 rounded-full bg-primary" />
         </div>
@@ -49,25 +52,33 @@ function App() {
             icon={<SettingsIcon size={28} />} 
             label="Config" 
           />
+            <div className="h-px bg-white/10 w-full my-2" />
+            <NavButton 
+            active={activeTab === 'sandbox'} 
+            onClick={() => setActiveTab('sandbox')} 
+            icon={<TestTube2 size={24} className="text-muted" />} 
+            label="UI Dev" 
+          />
         </div>
 
         <div className="mt-auto flex flex-col gap-4 items-center">
           {!backendConnected && (
-             <div className="text-danger animate-pulse"><WifiOff size={24} /></div>
+              <div className="text-danger animate-pulse"><WifiOff size={24} /></div>
           )}
           {backendConnected && !serialConnected && (
-             <div className="text-warning animate-pulse"><Usb size={24} /></div>
+              <div className="text-warning animate-pulse"><Usb size={24} /></div>
           )}
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden relative">
+      <main className="flex-1 overflow-hidden relative z-0">
         <div className="h-full p-6 overflow-y-auto">
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'charts' && <Charts />}
           {activeTab === 'controls' && <Controls />}
           {activeTab === 'settings' && <Settings />}
+          {activeTab === 'sandbox' && <Sandbox />}
         </div>
 
         {/* Overlays */}
@@ -92,9 +103,9 @@ function App() {
         )}
 
         {(backendConnected && serialConnected && isStale) && (
-           <div className="absolute top-4 right-4 bg-warning/20 text-warning px-4 py-2 rounded-full border border-warning/50 text-sm font-medium animate-pulse">
-             ⚠️ Stale Data ({Math.floor((Date.now() - (lastPacketAt || 0))/1000)}s)
-           </div>
+            <div className="absolute top-4 right-4 bg-warning/20 text-warning px-4 py-2 rounded-full border border-warning/50 text-sm font-medium animate-pulse">
+              ⚠️ Stale Data ({Math.floor((Date.now() - (lastPacketAt || 0))/1000)}s)
+            </div>
         )}
       </main>
     </div>

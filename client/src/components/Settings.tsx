@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import { DBEvent } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { Wifi, Server, Cpu, Clock, Activity, AlertTriangle } from 'lucide-react';
+import { clsx } from 'clsx';
 
 export function Settings() {
   const { telemetry } = useStore();
