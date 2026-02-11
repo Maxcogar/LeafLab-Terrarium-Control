@@ -27,8 +27,6 @@ export function Settings() {
 
   const { config, system } = telemetry;
 
-  if (!config || !system) return <div className="p-10 text-center text-muted">Waiting for full telemetry (config/system missing)...</div>;
-
   return (
     <div className="grid grid-cols-2 gap-6 h-full">
       {/* Config Setpoints */}

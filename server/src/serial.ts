@@ -3,6 +3,32 @@ import { ReadlineParser } from '@serialport/parser-readline';
 import { EventEmitter } from 'events';
 import { TelemetryPacket, SerialResponse, SerialCommand } from './types.js';
 
+const REQUIRED_SENSOR_KEYS = [
+  'soilMoisture1', 'soilMoisture2', 'airTemp', 'airHumidity',
+  'light', 'soilTemp', 'tds', 'ph', 'heaterTemp'
+];
+
+/**
+ * Validate that a parsed JSON object has the shape of a complete TelemetryPacket.
+ * Returns null if valid, or a string describing what's missing.
+ */
+export function validatePacket(obj: any): string | null {
+  if (!obj || typeof obj !== 'object') return 'not an object';
+
+  for (const section of ['sensors', 'outputs', 'system', 'control', 'config'] as const) {
+    if (!obj[section] || typeof obj[section] !== 'object') return `missing "${section}"`;
+  }
+
+  for (const key of REQUIRED_SENSOR_KEYS) {
+    const reading = obj.sensors[key];
+    if (!reading || typeof reading !== 'object' || typeof reading.ok !== 'boolean') {
+      return `missing or malformed sensor "${key}"`;
+    }
+  }
+
+  return null;
+}
+
 export class SerialManager extends EventEmitter {
   private port: SerialPort | null = null;
   private parser: ReadlineParser | null = null;
@@ -83,8 +109,13 @@ export class SerialManager extends EventEmitter {
     if (line.startsWith('CTX:')) {
       try {
         const json = line.substring(4);
-        const packet: TelemetryPacket = JSON.parse(json);
-        this.emit('telemetry', packet);
+        const packet = JSON.parse(json);
+        const error = validatePacket(packet);
+        if (error) {
+          console.warn(`[Serial] Dropping incomplete CTX packet: ${error}`);
+          return;
+        }
+        this.emit('telemetry', packet as TelemetryPacket);
       } catch (e) {
         console.error('[Serial] Failed to parse CTX:', e);
       }

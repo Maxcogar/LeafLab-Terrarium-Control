@@ -5,7 +5,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { SerialManager } from './serial.js';
+import { SerialManager, validatePacket } from './serial.js';
 import { StorageManager } from './db.js';
 import { TelemetryPacket, SerialCommand } from './types.js';
 
@@ -111,8 +111,12 @@ app.post('/api/command', (req, res) => {
 });
 
 app.post('/api/_mock/telemetry', (req, res) => {
-  const packet: TelemetryPacket = req.body;
-  handleTelemetry(packet);
+  const error = validatePacket(req.body);
+  if (error) {
+    res.status(400).json({ ok: false, error: `Invalid packet: ${error}` });
+    return;
+  }
+  handleTelemetry(req.body as TelemetryPacket);
   res.json({ ok: true });
 });
 
