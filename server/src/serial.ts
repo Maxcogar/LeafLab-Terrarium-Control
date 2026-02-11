@@ -62,6 +62,11 @@ export function validatePacket(obj: any): string | null {
     if (!reading || typeof reading !== 'object' || typeof reading.ok !== 'boolean') {
       return `missing or malformed sensor "${key}"`;
     }
+    for (const field of ['value', 'raw', 'percent'] as const) {
+      if (field in reading && typeof reading[field] !== 'number') {
+        return `sensors.${key}.${field}: expected number, got ${typeof reading[field]}`;
+      }
+    }
   }
 
   let err: string | null;
