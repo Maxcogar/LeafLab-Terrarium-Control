@@ -40,21 +40,24 @@ export function Charts() {
     try {
       const res = await fetch(`/api/history?keys=${keys}&start=${start}&end=${end}&points=100`);
       const raw: Record<string, { t: number, v: number }[]> = await res.json();
-      
-      // Transform for Recharts: array of objects with timestamp and all keys
-      // We need to align timestamps. Simple approach: map first key's timestamps
-      const primaryKey = GROUPS[group].keys[0];
-      const transformed = raw[primaryKey]?.map((pt, i) => {
-        const item: any = { time: pt.t * 1000 }; // ms for date formatting
+
+      // Collect all unique timestamps across all keys so charts render
+      // even when one sensor in a group is offline (has no data).
+      const tsSet = new Set<number>();
+      GROUPS[group].keys.forEach(k => {
+        raw[k]?.forEach(pt => tsSet.add(pt.t));
+      });
+      const timestamps = Array.from(tsSet).sort((a, b) => a - b);
+
+      const transformed = timestamps.map(t => {
+        const item: any = { time: t * 1000 }; // ms for date formatting
         GROUPS[group].keys.forEach(k => {
-          // Find matching point in other keys (assuming mostly aligned due to common query logic)
-          // Or just use index if reliable, but time matching is safer
-          const match = raw[k]?.find(p => Math.abs(p.t - pt.t) < 60); // 60s tolerance
+          const match = raw[k]?.find(p => Math.abs(p.t - t) < 60); // 60s tolerance
           item[k] = match ? match.v : null;
         });
         return item;
-      }) || [];
-      
+      });
+
       setData(transformed);
     } catch (e) {
       console.error(e);
@@ -123,14 +126,15 @@ export function Charts() {
             />
             <Legend />
             {GROUPS[group].keys.map((k, i) => (
-              <Area 
+              <Area
                 key={k}
-                type="monotone" 
-                dataKey={k} 
-                stroke={GROUPS[group].colors[i]} 
-                fillOpacity={1} 
-                fill={`url(#color${i})`} 
+                type="monotone"
+                dataKey={k}
+                stroke={GROUPS[group].colors[i]}
+                fillOpacity={1}
+                fill={`url(#color${i})`}
                 strokeWidth={2}
+                connectNulls
                 name={k.replace(/([A-Z])/g, ' $1').trim()} // naive pretty print
               />
             ))}
