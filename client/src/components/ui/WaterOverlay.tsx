@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import WaterWave from 'react-water-wave';
 
 // == ADJUSTABLE RIPPLE PARAMETERS ==
@@ -15,6 +15,12 @@ const RIPPLE_CONFIG = {
 };
 
 export const WaterOverlay: React.FC = () => {
+  const [isRipplesSupported] = useState(() => supportsRipples());
+
+  if (!isRipplesSupported) {
+    return null;
+  }
+
   // Generate a texture for the water simulation.
   // Using a neutral grey (#808080) with 'overlay' blend mode.
   // This makes the overlay invisible on the dark background 
@@ -63,6 +69,57 @@ export const WaterOverlay: React.FC = () => {
     </div>
   );
 };
+
+function supportsRipples(): boolean {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+
+  const canvas = document.createElement('canvas');
+  const gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+
+  if (!gl) {
+    return false;
+  }
+
+  if (!gl.getExtension('OES_texture_float')) {
+    return false;
+  }
+
+  const texture = gl.createTexture();
+  const framebuffer = gl.createFramebuffer();
+
+  if (!texture || !framebuffer) {
+    return false;
+  }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  try {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 32, 32, 0, gl.RGBA, gl.FLOAT, null);
+  } catch {
+    cleanupWebGl(gl, texture, framebuffer);
+    return false;
+  }
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  const isFramebufferComplete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+
+  cleanupWebGl(gl, texture, framebuffer);
+  return isFramebufferComplete;
+}
+
+function cleanupWebGl(gl: WebGLRenderingContext, texture: WebGLTexture, framebuffer: WebGLFramebuffer) {
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.deleteTexture(texture);
+  gl.deleteFramebuffer(framebuffer);
+}
 
 // Helper component to attach global listeners
 const GlobalRippleTrigger = ({ drop }: { drop: (opts: any) => void }) => {

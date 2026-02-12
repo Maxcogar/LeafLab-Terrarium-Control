@@ -7,7 +7,7 @@ import { Fan, Droplets, Lightbulb, Thermometer, Wind } from 'lucide-react';
 export function Dashboard() {
   const { telemetry, sparklines } = useStore();
 
-  if (!telemetry) return <div className="p-10 text-center text-muted">Waiting for data...</div>;
+  if (!telemetry) return <div className="p-10 text-center text-muted text-glow-sm">Waiting for data...</div>;
 
   const { sensors, outputs } = telemetry;
 
@@ -68,8 +68,8 @@ export function Dashboard() {
       </div>
 
       {/* Column 3: Status & Outputs */}
-      <div className="bg-surface rounded-2xl p-6 border border-white/5 flex flex-col gap-4">
-        <h3 className="text-muted uppercase text-xs font-bold tracking-wider mb-2">Active Outputs</h3>
+      <div className="glass-surface rounded-2xl p-6 flex flex-col gap-4">
+        <h3 className="text-muted uppercase text-xs font-bold tracking-wider mb-2 text-glow-sm">Active Outputs</h3>
         
         <OutputRow label="Grow Lights" active={outputs.growLights} icon={<Lightbulb size={18} />} />
         <OutputRow label="Water Pump" active={outputs.waterPump} icon={<Droplets size={18} />} />
@@ -78,10 +78,10 @@ export function Dashboard() {
         
         <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex justify-between items-center mb-2">
-            <span className="flex items-center gap-2 text-sm text-muted">
+            <span className="flex items-center gap-2 text-sm text-muted text-glow-sm">
               <Fan size={16} /> Fan Speed
             </span>
-            <span className="font-mono text-primary">{Math.round((outputs.fanSpeed / 255) * 100)}%</span>
+            <span className="font-mono text-primary text-glow">{Math.round((outputs.fanSpeed / 255) * 100)}%</span>
           </div>
           <div className="h-2 bg-black/40 rounded-full overflow-hidden">
             <div className="h-full bg-primary transition-all duration-300" style={{ width: `${(outputs.fanSpeed / 255) * 100}%` }} />
@@ -90,10 +90,10 @@ export function Dashboard() {
 
         <div className="mt-2">
            <div className="flex justify-between items-center mb-2">
-            <span className="flex items-center gap-2 text-sm text-muted">
+            <span className="flex items-center gap-2 text-sm text-muted text-glow-sm">
               <Thermometer size={16} /> Heater
             </span>
-            <span className="font-mono text-danger">{Math.round((outputs.heaterPower / 255) * 100)}%</span>
+            <span className="font-mono text-danger text-glow">{Math.round((outputs.heaterPower / 255) * 100)}%</span>
           </div>
           <div className="h-2 bg-black/40 rounded-full overflow-hidden">
             <div className="h-full bg-danger transition-all duration-300" style={{ width: `${(outputs.heaterPower / 255) * 100}%` }} />
@@ -109,18 +109,18 @@ function SensorCard({ label, value, unit, icon, data, color, status }: any) {
   const chartData = data?.map((v: number, i: number) => ({ i, v })) || [];
   
   return (
-    <div className="bg-surface rounded-2xl p-5 border border-white/5 relative overflow-hidden h-32 flex flex-col justify-between group">
+    <div className="glass-surface rounded-2xl p-5 overflow-hidden h-32 flex flex-col justify-between group">
       <div className="flex justify-between items-start z-10">
-        <div className="flex items-center gap-2 text-muted text-sm font-medium">
+        <div className="flex items-center gap-2 text-muted text-sm font-medium text-glow-sm">
           {icon}
           {label}
         </div>
-        {status && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-muted">{status}</span>}
+        {status && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-muted text-glow-sm">{status}</span>}
       </div>
       
       <div className="flex items-baseline gap-1 z-10">
-        <span className="text-4xl font-bold tracking-tight text-white">{value ?? '--'}</span>
-        <span className="text-muted font-medium">{unit}</span>
+        <span className="text-4xl font-bold tracking-tight text-white text-glow">{value ?? '--'}</span>
+        <span className="text-muted font-medium text-glow-sm">{unit}</span>
       </div>
 
       {/* Sparkline Background */}
@@ -150,7 +150,7 @@ function OutputRow({ label, active, icon }: any) {
     )}>
       <div className="flex items-center gap-3">
         {icon}
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm font-medium text-glow-sm">{label}</span>
       </div>
       <div className={clsx(
         "w-2.5 h-2.5 rounded-full",

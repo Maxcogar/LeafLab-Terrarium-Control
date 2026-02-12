@@ -22,7 +22,7 @@ function App() {
     <div className="flex h-full bg-background text-text font-sans selection:bg-primary selection:text-background relative">
       <WaterOverlay />
       {/* Sidebar / Navigation */}
-      <nav className="w-24 bg-surface/80 backdrop-blur-sm flex flex-col items-center py-6 border-r border-gray-800 shrink-0 z-10">
+      <nav className="w-24 bg-surface/70 backdrop-blur-xl flex flex-col items-center py-6 border-r border-white/10 shrink-0 z-10 shadow-[8px_0_30px_rgba(0,0,0,0.35)] relative">
         <div className="mb-8 p-2 bg-primary/20 rounded-full">
           <div className="w-8 h-8 rounded-full bg-primary" />
         </div>
@@ -56,7 +56,7 @@ function App() {
             <NavButton 
             active={activeTab === 'sandbox'} 
             onClick={() => setActiveTab('sandbox')} 
-            icon={<TestTube2 size={24} className="text-muted" />} 
+            icon={<TestTube2 size={24} className="text-muted text-glow-sm" />} 
             label="UI Dev" 
           />
         </div>
@@ -84,26 +84,26 @@ function App() {
         {/* Overlays */}
         {(!backendConnected) && (
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="text-center p-8 bg-surface rounded-xl border border-danger/30 shadow-2xl">
+            <div className="glass-surface-strong text-center p-8 rounded-xl border-danger/30 shadow-2xl">
               <WifiOff size={64} className="mx-auto mb-4 text-danger" />
-              <h2 className="text-2xl font-bold text-danger mb-2">Disconnected</h2>
-              <p className="text-muted">Connecting to backend...</p>
+              <h2 className="text-2xl font-bold text-danger mb-2 text-glow">Disconnected</h2>
+              <p className="text-muted text-glow-sm">Connecting to backend...</p>
             </div>
           </div>
         )}
         
         {(backendConnected && !serialConnected) && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40">
-            <div className="text-center p-8 bg-surface rounded-xl border border-warning/30 shadow-2xl">
+            <div className="glass-surface-strong text-center p-8 rounded-xl border-warning/30 shadow-2xl">
               <Usb size={64} className="mx-auto mb-4 text-warning" />
-              <h2 className="text-2xl font-bold text-warning mb-2">Controller Offline</h2>
-              <p className="text-muted">Waiting for ESP32 connection...</p>
+              <h2 className="text-2xl font-bold text-warning mb-2 text-glow">Controller Offline</h2>
+              <p className="text-muted text-glow-sm">Waiting for ESP32 connection...</p>
             </div>
           </div>
         )}
 
         {(backendConnected && serialConnected && isStale) && (
-            <div className="absolute top-4 right-4 bg-warning/20 text-warning px-4 py-2 rounded-full border border-warning/50 text-sm font-medium animate-pulse">
+            <div className="absolute top-4 right-4 bg-warning/20 text-warning px-4 py-2 rounded-full border border-warning/50 text-sm font-medium animate-pulse text-glow">
               ⚠️ Stale Data ({Math.floor((Date.now() - (lastPacketAt || 0))/1000)}s)
             </div>
         )}
@@ -117,14 +117,14 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
     <button 
       onClick={onClick}
       className={clsx(
-        "flex flex-col items-center gap-1 p-3 rounded-xl transition-all active:scale-95",
+        "pressable-strong flex flex-col items-center gap-1 p-3 rounded-xl transition-all",
         active 
-          ? "bg-primary text-surface font-bold shadow-lg shadow-primary/20" 
-          : "text-muted hover:bg-white/5 hover:text-text"
+          ? "bg-primary text-surface font-bold shadow-lg shadow-primary/20 text-glow" 
+          : "text-muted hover:bg-white/5 hover:text-text text-glow-sm"
       )}
     >
       {icon}
-      <span className="text-xs">{label}</span>
+      <span className="text-xs text-glow-sm">{label}</span>
     </button>
   )
 }

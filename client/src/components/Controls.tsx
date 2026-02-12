@@ -7,7 +7,7 @@ import { Outputs } from '../types';
 export function Controls() {
   const { telemetry, sendCommand } = useStore();
 
-  if (!telemetry) return <div className="p-10 text-center text-muted">Waiting for telemetry...</div>;
+  if (!telemetry) return <div className="p-10 text-center text-muted text-glow-sm">Waiting for telemetry...</div>;
 
   const { outputs, control } = telemetry;
   const isOverride = control.manualOverride;
@@ -15,14 +15,14 @@ export function Controls() {
   return (
     <div className="flex flex-col h-full gap-6">
       {/* Header / System Controls */}
-      <div className="flex justify-between items-center bg-surface p-4 rounded-2xl border border-white/5">
+      <div className="glass-surface flex justify-between items-center p-4 rounded-2xl">
         <div className="flex items-center gap-3">
           <div className={clsx("p-2 rounded-lg", isOverride ? "bg-warning/20 text-warning" : "bg-white/5 text-muted")}>
             {isOverride ? <Lock size={20} /> : <Unlock size={20} />}
           </div>
           <div>
-            <h2 className="font-bold">Manual Override</h2>
-            <p className="text-xs text-muted">{isOverride ? 'Active - Auto logic suspended' : 'Inactive - System is automatic'}</p>
+            <h2 className="font-bold text-glow">Manual Override</h2>
+            <p className="text-xs text-muted text-glow-sm">{isOverride ? 'Active - Auto logic suspended' : 'Inactive - System is automatic'}</p>
           </div>
         </div>
         
@@ -30,14 +30,14 @@ export function Controls() {
           {isOverride && (
             <button 
               onClick={() => sendCommand({ action: 'release' })}
-              className="bg-primary/20 hover:bg-primary/30 text-primary px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+              className="pressable-strong bg-primary/20 hover:bg-primary/30 text-primary px-4 py-2 rounded-lg font-bold text-sm transition-colors text-glow"
             >
               Release Control
             </button>
           )}
           <button 
             onClick={() => sendCommand({ action: 'status' })}
-            className="bg-white/5 hover:bg-white/10 text-text px-3 py-2 rounded-lg"
+            className="pressable-strong bg-white/5 hover:bg-white/10 text-text px-3 py-2 rounded-lg text-glow-sm"
           >
             <Activity size={20} />
           </button>
@@ -45,7 +45,7 @@ export function Controls() {
             onClick={() => {
               if (confirm('Reboot ESP32 controller?')) sendCommand({ action: 'reboot' });
             }}
-            className="bg-danger/20 hover:bg-danger/30 text-danger px-3 py-2 rounded-lg"
+            className="pressable-strong bg-danger/20 hover:bg-danger/30 text-danger px-3 py-2 rounded-lg text-glow"
           >
             <RotateCcw size={20} />
           </button>
@@ -54,8 +54,8 @@ export function Controls() {
 
       <div className="grid grid-cols-2 gap-6 flex-1 overflow-y-auto">
         {/* Toggles */}
-        <div className="bg-surface rounded-2xl p-6 border border-white/5 space-y-4">
-          <h3 className="text-xs font-bold uppercase text-muted tracking-wider mb-4">Switches</h3>
+        <div className="glass-surface rounded-2xl p-6 space-y-4">
+          <h3 className="text-xs font-bold uppercase text-muted tracking-wider mb-4 text-glow-sm">Switches</h3>
           <Toggle 
             label="Grow Lights" 
             checked={outputs.growLights} 
@@ -79,8 +79,8 @@ export function Controls() {
         </div>
 
         {/* Sliders */}
-        <div className="bg-surface rounded-2xl p-6 border border-white/5 space-y-6">
-          <h3 className="text-xs font-bold uppercase text-muted tracking-wider mb-4">Variable Control</h3>
+        <div className="glass-surface rounded-2xl p-6 space-y-6">
+          <h3 className="text-xs font-bold uppercase text-muted tracking-wider mb-4 text-glow-sm">Variable Control</h3>
           <Slider 
             label="Fan Speed" 
             value={outputs.fanSpeed} 
@@ -119,11 +119,11 @@ export function Controls() {
 function Toggle({ label, checked, onChange }: { label: string, checked: boolean, onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between p-2">
-      <span className="font-medium">{label}</span>
+      <span className="font-medium text-glow-sm">{label}</span>
       <button 
         onClick={() => onChange(!checked)}
         className={clsx(
-          "w-14 h-8 rounded-full relative transition-colors duration-200",
+          "pressable w-14 h-8 rounded-full relative transition-colors duration-200",
           checked ? "bg-primary" : "bg-white/10"
         )}
       >
@@ -175,8 +175,8 @@ function Slider({ label, value, max, unit, onChange, color }: SliderProps) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="text-muted">{label}</span>
-        <span className="font-mono">{localVal}{unit}</span>
+        <span className="text-muted text-glow-sm">{label}</span>
+        <span className="font-mono text-glow">{localVal}{unit}</span>
       </div>
       <input 
         type="range" 

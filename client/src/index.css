@@ -3,6 +3,37 @@
 @tailwind utilities;
 
 @layer utilities {
+  .glass-surface {
+    @apply relative bg-surface/55 backdrop-blur-md border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.28)];
+  }
+
+  .glass-surface-strong {
+    @apply relative bg-surface/70 backdrop-blur-xl border border-white/15 shadow-[0_16px_36px_rgba(0,0,0,0.35)];
+  }
+
+  .glass-surface::before,
+  .glass-surface-strong::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .pressable {
+    @apply transition-[transform,box-shadow,background-color,color,border-color] duration-150 ease-out active:scale-[0.98] active:shadow-inner;
+    transform: translateZ(0);
+  }
+
+  .pressable-strong {
+    @apply transition-[transform,box-shadow,background-color,color,border-color] duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0 active:scale-95 active:shadow-inner;
+    transform: translateZ(0);
+  }
+
   .text-glow {
     text-shadow: 0 0 2px rgba(255, 255, 255, 0.1), 
                  0 0 8px currentColor;

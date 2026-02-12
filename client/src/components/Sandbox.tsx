@@ -3,8 +3,7 @@ import { GlassPanel } from './ui/GlassPanel';
 import { RippleButton } from './ui/RippleButton';
 import { ElasticSlider } from './ui/ElasticSlider';
 import { RollingNumber } from './ui/RollingNumber';
-import { WaterOverlay } from './ui/WaterOverlay';
-import { Activity, Power, Zap, Droplets } from 'lucide-react';
+import { Activity, Power, Zap } from 'lucide-react';
 
 export function Sandbox() {
   const [sliderValue, setSliderValue] = useState(50);
@@ -12,8 +11,6 @@ export function Sandbox() {
 
   return (
     <div className="p-8 min-h-full bg-gradient-to-br from-background via-gray-900 to-black text-text space-y-12 relative">
-      <WaterOverlay />
-      
       <header className="mb-8">
         <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-white mb-2 text-glow">
           UI Component Sandbox

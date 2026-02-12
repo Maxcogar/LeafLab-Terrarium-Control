@@ -65,13 +65,13 @@ export function Charts() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex justify-between items-center bg-surface p-2 rounded-xl">
+      <div className="glass-surface flex justify-between items-center p-2 rounded-xl">
         <div className="flex gap-2">
           {(['climate', 'soil', 'environment'] as SensorGroup[]).map(g => (
             <button
               key={g}
               onClick={() => setGroup(g)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${group === g ? 'bg-primary text-background' : 'text-muted hover:bg-white/5'}`}
+              className={`pressable px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${group === g ? 'bg-primary text-background text-glow' : 'text-muted hover:bg-white/5 text-glow-sm'}`}
             >
               {g}
             </button>
@@ -83,7 +83,7 @@ export function Charts() {
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${range === r ? 'bg-white/10 text-white' : 'text-muted hover:text-white'}`}
+              className={`pressable px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${range === r ? 'bg-white/10 text-white text-glow' : 'text-muted hover:text-white text-glow-sm'}`}
             >
               {r}
             </button>
@@ -91,7 +91,7 @@ export function Charts() {
         </div>
       </div>
 
-      <div className="flex-1 bg-surface rounded-2xl p-4 border border-white/5 relative min-h-0">
+      <div className="glass-surface flex-1 rounded-2xl p-4 relative min-h-0">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/50 z-10 backdrop-blur-sm rounded-2xl">
             <Loader2 className="animate-spin text-primary" size={32} />
