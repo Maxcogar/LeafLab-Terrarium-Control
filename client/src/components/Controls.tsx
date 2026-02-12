@@ -10,6 +10,9 @@ export function Controls() {
   if (!telemetry) return <div className="p-10 text-center text-muted">Waiting for telemetry...</div>;
 
   const { outputs, control } = telemetry;
+
+  if (!outputs || !control) return <div className="p-10 text-center text-muted">Waiting for full telemetry data...</div>;
+
   const isOverride = control.manualOverride;
 
   return (

@@ -22,7 +22,8 @@ const SPARKLINE_LENGTH = 30;
 const updateSparklines = (current: Record<string, number[]>, packet: TelemetryPacket) => {
   const next = { ...current };
   const s = packet.sensors;
-  
+  if (!s) return next;
+
   const push = (key: string, val: number | undefined) => {
     if (val === undefined) return;
     if (!next[key]) next[key] = [];

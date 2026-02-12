@@ -63,11 +63,11 @@ export interface Config {
 }
 
 export interface TelemetryPacket {
-  sensors: Sensors;
-  outputs: Outputs;
-  system: System;
-  control: Control;
-  config: Config;
+  sensors?: Sensors;
+  outputs?: Outputs;
+  system?: System;
+  control?: Control;
+  config?: Config;
 }
 
 export interface SerialCommand {
