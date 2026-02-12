@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../store';
 import { Power, RotateCcw, Activity, Lock, Unlock } from 'lucide-react';
 import clsx from 'clsx';
@@ -117,21 +117,36 @@ export function Controls() {
 }
 
 function Toggle({ label, checked, onChange }: { label: string, checked: boolean, onChange: (v: boolean) => void }) {
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
+
+  // Clear optimistic state when telemetry catches up
+  React.useEffect(() => {
+    setOptimistic(null);
+  }, [checked]);
+
+  const displayChecked = optimistic !== null ? optimistic : checked;
+
+  const handleClick = () => {
+    const newVal = !displayChecked;
+    setOptimistic(newVal);
+    onChange(newVal);
+  };
+
   return (
     <div className="flex items-center justify-between p-2">
       <span className="font-medium">{label}</span>
-      <button 
-        onClick={() => onChange(!checked)}
+      <button
+        onClick={handleClick}
         className={clsx(
           "w-14 h-8 rounded-full relative transition-colors duration-200",
-          checked ? "bg-primary" : "bg-white/10"
+          displayChecked ? "bg-primary" : "bg-white/10"
         )}
       >
         <div className={clsx(
           "absolute top-1 left-1 w-6 h-6 rounded-full bg-white transition-transform duration-200 shadow-sm flex items-center justify-center",
-          checked ? "translate-x-6" : "translate-x-0"
+          displayChecked ? "translate-x-6" : "translate-x-0"
         )}>
-          {checked && <Power size={14} className="text-primary" />}
+          {displayChecked && <Power size={14} className="text-primary" />}
         </div>
       </button>
     </div>
@@ -139,19 +154,19 @@ function Toggle({ label, checked, onChange }: { label: string, checked: boolean,
 }
 
 function Slider({ label, value, max, unit, onChange, color }: { label: string, value: number, max: number, unit: string, onChange: (v: number) => void, color?: string }) {
-  // Local state for smooth dragging, commit on mouseUp/touchEnd could be better but simplified here
-  // Actually, for immediate feedback usually we want `onChange` to fire. 
-  // But sending serial commands on every drag event is bad (floods buffer).
-  // We should use onChangeEnd or debounce.
-  // For this implementation, I'll use onChange (input) but maybe throttle in backend? 
-  // No, better to throttle here or use onMouseUp.
-  
   const [localVal, setLocalVal] = useState(value);
   const [dragging, setDragging] = useState(false);
+  const justCommitted = useRef(false);
 
-  // Sync with prop when not dragging
+  // Sync with prop when not dragging (skip once after commit so we don't snap back)
   React.useEffect(() => {
-    if (!dragging) setLocalVal(value);
+    if (!dragging) {
+      if (justCommitted.current) {
+        justCommitted.current = false;
+      } else {
+        setLocalVal(value);
+      }
+    }
   }, [value, dragging]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +174,7 @@ function Slider({ label, value, max, unit, onChange, color }: { label: string, v
   };
 
   const handleCommit = () => {
+    justCommitted.current = true;
     setDragging(false);
     onChange(localVal);
   };

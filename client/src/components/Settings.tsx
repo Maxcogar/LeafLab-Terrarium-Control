@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
 import { DBEvent } from '../types';
-import { formatDistanceToNow } from 'date-fns';
 import { Wifi, Server, Cpu, Clock, Activity, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -26,6 +25,8 @@ export function Settings() {
   if (!telemetry) return <div className="p-10 text-center text-muted">Waiting for telemetry...</div>;
 
   const { config, system } = telemetry;
+
+  if (!config || !system) return <div className="p-10 text-center text-muted">Waiting for full telemetry data...</div>;
 
   return (
     <div className="grid grid-cols-2 gap-6 h-full">
