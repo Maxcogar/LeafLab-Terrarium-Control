@@ -1,8 +1,9 @@
 import React from 'react';
 import { useStore } from '../store';
-import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import clsx from 'clsx';
-import { Fan, Droplets, Lightbulb, Thermometer, Wind } from 'lucide-react';
+import { Fan, Droplets, Lightbulb, Thermometer, Wind, TestTube, Waves } from 'lucide-react';
+import { formatPH, formatTDS } from '../utils/sensors';
 
 export function Dashboard() {
   const { telemetry, sparklines } = useStore();
@@ -31,6 +32,14 @@ export function Dashboard() {
           data={sparklines.airHumidity} 
           color="#60a5fa"
         />
+        <SensorCard
+          label="Light"
+          value={sensors.light.value?.toFixed(0)}
+          unit="lux"
+          icon={<Lightbulb size={20} />}
+          data={sparklines.light}
+          color="#facc15"
+        />
         <SensorCard 
           label="VPD" 
           value="1.2" // Calculated field example, or derived
@@ -41,7 +50,7 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Column 2: Soil & Light */}
+      {/* Column 2: Soil & Water */}
       <div className="space-y-6">
         <SensorCard 
           label="Soil Moisture 1" 
@@ -57,13 +66,21 @@ export function Dashboard() {
           data={sparklines.soilMoisture2} 
           color="#4ade80"
         />
+         <SensorCard
+          label="pH"
+          value={sensors.ph.value !== undefined ? formatPH(sensors.ph.value) : '--'}
+          unit="pH"
+          icon={<TestTube size={20} />}
+          data={sparklines.ph}
+          color="#ec4899"
+        />
         <SensorCard 
-          label="Light" 
-          value={sensors.light.value?.toFixed(0)} 
-          unit="lux" 
-          icon={<Lightbulb size={20} />} 
-          data={sparklines.light} 
-          color="#facc15"
+          label="TDS"
+          value={sensors.tds.value !== undefined ? formatTDS(sensors.tds.value) : '--'}
+          unit="ppm"
+          icon={<Waves size={20} />}
+          data={sparklines.tds}
+          color="#38bdf8"
         />
       </div>
 
@@ -109,7 +126,7 @@ function SensorCard({ label, value, unit, icon, data, color, status }: any) {
   const chartData = data?.map((v: number, i: number) => ({ i, v })) || [];
   
   return (
-    <div className="bg-surface rounded-2xl p-5 border border-white/5 relative overflow-hidden h-32 flex flex-col justify-between group">
+    <div className="bg-surface rounded-2xl p-5 border border-white/5 relative overflow-hidden h-24 flex flex-col justify-between group">
       <div className="flex justify-between items-start z-10">
         <div className="flex items-center gap-2 text-muted text-sm font-medium">
           {icon}
@@ -119,7 +136,7 @@ function SensorCard({ label, value, unit, icon, data, color, status }: any) {
       </div>
       
       <div className="flex items-baseline gap-1 z-10">
-        <span className="text-4xl font-bold tracking-tight text-white">{value ?? '--'}</span>
+        <span className="text-3xl font-bold tracking-tight text-white">{value ?? '--'}</span>
         <span className="text-muted font-medium">{unit}</span>
       </div>
 
