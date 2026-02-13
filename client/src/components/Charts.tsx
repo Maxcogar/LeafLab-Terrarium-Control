@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { calculateTDS, calculatePH } from '../utils/sensors';
 
 type TimeRange = '1h' | '6h' | '24h' | '7d';
-type SensorGroup = 'climate' | 'soil' | 'environment';
+type SensorGroup = 'climate' | 'soil' | 'environment' | 'water';
 
 const RANGES: Record<TimeRange, number> = {
   '1h': 3600,
@@ -16,7 +17,8 @@ const RANGES: Record<TimeRange, number> = {
 const GROUPS: Record<SensorGroup, { keys: string[], colors: string[] }> = {
   climate: { keys: ['airTempF', 'airHumidity'], colors: ['#f472b6', '#60a5fa'] },
   soil: { keys: ['soilMoisture1Pct', 'soilMoisture2Pct'], colors: ['#4ade80', '#22c55e'] },
-  environment: { keys: ['lightLux', 'soilTempF'], colors: ['#facc15', '#a78bfa'] }
+  environment: { keys: ['lightLux', 'soilTempF'], colors: ['#facc15', '#a78bfa'] },
+  water: { keys: ['tds', 'ph'], colors: ['#38bdf8', '#ec4899'] }
 };
 
 export function Charts() {
@@ -48,11 +50,20 @@ export function Charts() {
       const primaryKey = groupKeys.reduce((best, k) =>
         (raw[k]?.length ?? 0) > (raw[best]?.length ?? 0) ? k : best
       , groupKeys[0]);
+
       const transformed = raw[primaryKey]?.map((pt) => {
         const item: any = { time: pt.t * 1000 }; // ms for date formatting
         groupKeys.forEach(k => {
           const match = raw[k]?.find(p => Math.abs(p.t - pt.t) < 60); // 60s tolerance
-          item[k] = match ? match.v : null;
+          if (match) {
+            // Apply conversion if needed
+            let val = match.v;
+            if (k === 'tds') val = calculateTDS(val);
+            if (k === 'ph') val = calculatePH(val);
+            item[k] = val;
+          } else {
+            item[k] = null;
+          }
         });
         return item;
       }) || [];
@@ -69,7 +80,7 @@ export function Charts() {
     <div className="flex flex-col h-full gap-4">
       <div className="flex justify-between items-center bg-surface p-2 rounded-xl">
         <div className="flex gap-2">
-          {(['climate', 'soil', 'environment'] as SensorGroup[]).map(g => (
+          {(['climate', 'soil', 'environment', 'water'] as SensorGroup[]).map(g => (
             <button
               key={g}
               onClick={() => setGroup(g)}

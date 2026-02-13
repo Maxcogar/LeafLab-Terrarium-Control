@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
 import { TelemetryPacket, SerialCommand, Outputs } from './types';
+import { calculateTDS, calculatePH } from './utils/sensors';
 
 interface StoreState {
   telemetry: TelemetryPacket | null;
@@ -37,6 +38,10 @@ const updateSparklines = (current: Record<string, number[]>, packet: TelemetryPa
   if (s.heaterTemp.ok) push('heaterTemp', s.heaterTemp.value);
   if (s.soilTemp.ok) push('soilTemp', s.soilTemp.value);
 
+  // Converted values
+  if (s.tds.ok) push('tds', s.tds.value);
+  if (s.ph.ok) push('ph', s.ph.value);
+
   return next;
 };
 
@@ -63,6 +68,14 @@ export const useStore = create<StoreState>((set, get) => ({
     });
 
     socket.on('telemetry', (packet: TelemetryPacket) => {
+      // Apply conversions before storing/sparklining
+      if (packet.sensors.tds.ok && packet.sensors.tds.raw !== undefined) {
+        packet.sensors.tds.value = calculateTDS(packet.sensors.tds.raw);
+      }
+      if (packet.sensors.ph.ok && packet.sensors.ph.raw !== undefined) {
+        packet.sensors.ph.value = calculatePH(packet.sensors.ph.raw);
+      }
+
       set((state) => ({
         telemetry: packet,
         lastPacketAt: Date.now(),
