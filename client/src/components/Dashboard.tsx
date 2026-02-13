@@ -13,9 +13,9 @@ export function Dashboard() {
   const { sensors, outputs } = telemetry;
 
   return (
-    <div className="grid grid-cols-3 gap-6 h-full">
+    <div className="grid grid-cols-3 gap-3 h-full">
       {/* Column 1: Primary Climate */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         <SensorCard 
           label="Air Temp" 
           value={sensors.airTemp.value?.toFixed(1)} 
@@ -51,7 +51,7 @@ export function Dashboard() {
       </div>
 
       {/* Column 2: Soil & Water */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         <SensorCard 
           label="Soil Moisture 1" 
           value={sensors.soilMoisture1.percent?.toFixed(0)} 
@@ -85,16 +85,16 @@ export function Dashboard() {
       </div>
 
       {/* Column 3: Status & Outputs */}
-      <div className="bg-surface rounded-2xl p-6 border border-white/5 flex flex-col gap-4">
-        <h3 className="text-muted uppercase text-xs font-bold tracking-wider mb-2">Active Outputs</h3>
+      <div className="bg-surface rounded-2xl p-4 border border-white/5 flex flex-col gap-3">
+        <h3 className="text-muted uppercase text-xs font-bold tracking-wider mb-1">Active Outputs</h3>
         
         <OutputRow label="Grow Lights" active={outputs.growLights} icon={<Lightbulb size={18} />} />
         <OutputRow label="Water Pump" active={outputs.waterPump} icon={<Droplets size={18} />} />
         <OutputRow label="Humidifier 1" active={outputs.humidifier1} icon={<Wind size={18} />} />
         <OutputRow label="Humidifier 2" active={outputs.humidifier2} icon={<Wind size={18} />} />
         
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="flex justify-between items-center mb-2">
+        <div className="mt-2 pt-3 border-t border-white/10">
+          <div className="flex justify-between items-center mb-1">
             <span className="flex items-center gap-2 text-sm text-muted">
               <Fan size={16} /> Fan Speed
             </span>
@@ -105,8 +105,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-2">
-           <div className="flex justify-between items-center mb-2">
+        <div className="mt-1">
+           <div className="flex justify-between items-center mb-1">
             <span className="flex items-center gap-2 text-sm text-muted">
               <Thermometer size={16} /> Heater
             </span>
@@ -126,7 +126,7 @@ function SensorCard({ label, value, unit, icon, data, color, status }: any) {
   const chartData = data?.map((v: number, i: number) => ({ i, v })) || [];
   
   return (
-    <div className="bg-surface rounded-2xl p-5 border border-white/5 relative overflow-hidden h-24 flex flex-col justify-between group">
+    <div className="bg-surface rounded-2xl p-4 border border-white/5 relative overflow-hidden h-24 flex flex-col justify-between group">
       <div className="flex justify-between items-start z-10">
         <div className="flex items-center gap-2 text-muted text-sm font-medium">
           {icon}
@@ -162,7 +162,7 @@ function SensorCard({ label, value, unit, icon, data, color, status }: any) {
 function OutputRow({ label, active, icon }: any) {
   return (
     <div className={clsx(
-      "flex items-center justify-between p-3 rounded-xl transition-all",
+      "flex items-center justify-between p-2.5 rounded-xl transition-all",
       active ? "bg-white/10 text-white" : "bg-black/20 text-muted"
     )}>
       <div className="flex items-center gap-3">
