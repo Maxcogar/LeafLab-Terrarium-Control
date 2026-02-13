@@ -42,13 +42,15 @@ export function Charts() {
       const raw: Record<string, { t: number, v: number }[]> = await res.json();
       
       // Transform for Recharts: array of objects with timestamp and all keys
-      // We need to align timestamps. Simple approach: map first key's timestamps
-      const primaryKey = GROUPS[group].keys[0];
-      const transformed = raw[primaryKey]?.map((pt, i) => {
+      // Use the key with the most data points as the timestamp source
+      // so the chart still renders when only one sensor in a pair is connected
+      const groupKeys = GROUPS[group].keys;
+      const primaryKey = groupKeys.reduce((best, k) =>
+        (raw[k]?.length ?? 0) > (raw[best]?.length ?? 0) ? k : best
+      , groupKeys[0]);
+      const transformed = raw[primaryKey]?.map((pt) => {
         const item: any = { time: pt.t * 1000 }; // ms for date formatting
-        GROUPS[group].keys.forEach(k => {
-          // Find matching point in other keys (assuming mostly aligned due to common query logic)
-          // Or just use index if reliable, but time matching is safer
+        groupKeys.forEach(k => {
           const match = raw[k]?.find(p => Math.abs(p.t - pt.t) < 60); // 60s tolerance
           item[k] = match ? match.v : null;
         });
