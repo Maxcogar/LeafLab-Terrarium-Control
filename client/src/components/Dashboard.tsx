@@ -40,13 +40,13 @@ export function Dashboard() {
           data={sparklines.light}
           color="#facc15"
         />
-        <SensorCard 
-          label="VPD" 
-          value="1.2" // Calculated field example, or derived
-          unit="kPa" 
-          icon={<Wind size={20} />} 
+        <SensorCard
+          label="Soil Temp"
+          value={sensors.soilTemp.value?.toFixed(1)}
+          unit="°F"
+          icon={<Thermometer size={20} />}
+          data={sparklines.soilTemp}
           color="#a78bfa"
-          status="calculated"
         />
       </div>
 
