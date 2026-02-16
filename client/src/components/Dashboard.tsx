@@ -42,7 +42,7 @@ export function Dashboard() {
         />
         <SensorCard
           label="Soil Temp"
-          value={sensors.soilTemp.ok ? sensors.soilTemp.value?.toFixed(1) : undefined}
+          value={sensors.soilTemp.value?.toFixed(1)}
           unit="°F"
           icon={<Thermometer size={20} />}
           data={sparklines.soilTemp}
