@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import { TelemetryPacket, SerialCommand, Outputs } from './types';
+import { TelemetryPacket, SerialCommand, TimedOverrideInfo, Outputs } from './types';
 import { calculateTDS, calculatePH } from './utils/sensors';
 
 interface StoreState {
@@ -10,11 +10,13 @@ interface StoreState {
   backendConnected: boolean;
   sparklines: Record<string, number[]>; // key -> array of values
   activeTab: 'dashboard' | 'charts' | 'controls' | 'settings';
-  
+  overrideTimers: TimedOverrideInfo[];
+
   socket: Socket | null;
   connect: () => void;
   sendCommand: (cmd: SerialCommand) => void;
   setActiveTab: (tab: StoreState['activeTab']) => void;
+  cancelOverrideTimer: (output: keyof Outputs) => void;
 }
 
 const SPARKLINE_LENGTH = 30;
@@ -23,7 +25,7 @@ const SPARKLINE_LENGTH = 30;
 const updateSparklines = (current: Record<string, number[]>, packet: TelemetryPacket) => {
   const next = { ...current };
   const s = packet.sensors;
-  
+
   const push = (key: string, val: number | undefined) => {
     if (val === undefined) return;
     if (!next[key]) next[key] = [];
@@ -52,6 +54,7 @@ export const useStore = create<StoreState>((set, get) => ({
   backendConnected: false,
   sparklines: {},
   activeTab: 'dashboard',
+  overrideTimers: [],
   socket: null,
 
   connect: () => {
@@ -87,6 +90,10 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ serialConnected: status.connected });
     });
 
+    socket.on('overrides', (timers: TimedOverrideInfo[]) => {
+      set({ overrideTimers: timers });
+    });
+
     set({ socket });
   },
 
@@ -96,6 +103,11 @@ export const useStore = create<StoreState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cmd)
     }).catch(err => console.error('Command failed', err));
+  },
+
+  cancelOverrideTimer: (output: keyof Outputs) => {
+    fetch(`/api/overrides/${output}`, { method: 'DELETE' })
+      .catch(err => console.error('Cancel timer failed', err));
   },
 
   setActiveTab: (tab) => set({ activeTab: tab })
