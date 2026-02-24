@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { SerialManager } from './serial.js';
 import { StorageManager } from './db.js';
-import { TelemetryPacket, SerialCommand } from './types.js';
+import { TelemetryPacket, SerialCommand, TimedOverrideInfo, Outputs } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,10 +25,6 @@ const io = new Server(httpServer, {
 });
 
 const db = new StorageManager();
-// Only start serial if NOT in mock mode, or maybe always start and let it fail?
-// PRD says mock mode injects via HTTP. But `dev:mock` command in PRD doesn't explicitly disable serial. 
-// However, running on a dev machine without serial port would cause reconnect loops.
-// I'll skip serial start if MOCK_MODE is true.
 let serial: SerialManager | null = null;
 if (!MOCK_MODE) {
   serial = new SerialManager(SERIAL_PORT);
@@ -40,26 +36,95 @@ if (!MOCK_MODE) {
 let lastPacket: TelemetryPacket | null = null;
 let lastPacketAt = 0;
 
-// Event handling
+// ── Timed Override Management ──────────────────────────────────────
+// Server-side per-output timers that keep ESP32 override alive and
+// auto-release individual outputs when their timer expires.
+
+const NUMERIC_OUTPUTS: (keyof Outputs)[] = ['fanSpeed', 'heaterPower', 'servo1Angle', 'servo2Angle'];
+const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 min (ESP32 timeout is 5 min)
+
+interface ActiveTimer extends TimedOverrideInfo {
+  timerId: ReturnType<typeof setTimeout>;
+}
+
+const activeTimers = new Map<string, ActiveTimer>();
+let keepaliveInterval: ReturnType<typeof setInterval> | null = null;
+
+function broadcastOverrides() {
+  const overrides: TimedOverrideInfo[] = Array.from(activeTimers.values()).map(
+    ({ timerId, ...info }) => info
+  );
+  io.emit('overrides', overrides);
+}
+
+function sendToEsp(cmd: SerialCommand): boolean {
+  if (MOCK_MODE) {
+    console.log('[Mock] Timer command:', cmd);
+    return true;
+  }
+  return !!(serial && serial.sendCommand(cmd));
+}
+
+function startKeepalive() {
+  if (keepaliveInterval) return;
+  keepaliveInterval = setInterval(() => {
+    if (activeTimers.size === 0) return;
+    // Re-send any active output's current value to reset ESP32's 5-min override timeout
+    const first = activeTimers.values().next().value!;
+    sendToEsp({ action: 'set', output: first.output, value: first.value });
+  }, KEEPALIVE_INTERVAL_MS);
+}
+
+function stopKeepalive() {
+  if (keepaliveInterval) {
+    clearInterval(keepaliveInterval);
+    keepaliveInterval = null;
+  }
+}
+
+function clearAllTimers() {
+  for (const timer of activeTimers.values()) {
+    clearTimeout(timer.timerId);
+  }
+  activeTimers.clear();
+  stopKeepalive();
+  broadcastOverrides();
+}
+
+function handleTimerExpiry(output: keyof Outputs) {
+  activeTimers.delete(output);
+  console.log(`[Timer] Override expired for ${output}`);
+
+  // Turn the output off
+  const offValue = NUMERIC_OUTPUTS.includes(output) ? 0 : false;
+  sendToEsp({ action: 'set', output, value: offValue });
+
+  if (activeTimers.size === 0) {
+    // All timed overrides done — release back to automatic
+    sendToEsp({ action: 'release' });
+    stopKeepalive();
+    console.log('[Timer] All timers expired — released to auto');
+  }
+
+  broadcastOverrides();
+}
+
+// ── Event handling ─────────────────────────────────────────────────
+
 const handleTelemetry = (packet: TelemetryPacket) => {
   lastPacket = packet;
   lastPacketAt = Date.now();
-  
-  // Broadcast to frontend
   io.emit('telemetry', packet);
-  
-  // Buffer for storage
   db.bufferPacket(packet);
 };
 
 if (serial) {
   serial.on('telemetry', handleTelemetry);
   serial.on('status', (status) => io.emit('serialStatus', status));
-  serial.on('response', (res) => console.log('[Serial] RSP:', res)); // Forward to UI if needed? PRD doesn't strictly say, but UI needs 'sent' confirmation usually.
-  // Ideally command responses should be correlated, but for now we just log or maybe emit generic 'response'
+  serial.on('response', (res) => console.log('[Serial] RSP:', res));
 }
 
-// API Routes
+// ── API Routes ─────────────────────────────────────────────────────
 
 app.get('/api/status', (req, res) => {
   res.json({
@@ -94,17 +159,95 @@ app.get('/api/events', (req, res) => {
   res.json(db.getEvents(limit));
 });
 
-app.post('/api/command', (req, res) => {
-  const cmd: SerialCommand = req.body;
-  
-  if (MOCK_MODE) {
-    console.log('[Mock] Command received:', cmd);
-    res.json({ sent: true, cmd, mock: true });
+app.get('/api/overrides', (_req, res) => {
+  const overrides: TimedOverrideInfo[] = Array.from(activeTimers.values()).map(
+    ({ timerId, ...info }) => info
+  );
+  res.json(overrides);
+});
+
+app.delete('/api/overrides/:output', (req, res) => {
+  const output = req.params.output as keyof Outputs;
+  const timer = activeTimers.get(output);
+  if (!timer) {
+    res.status(404).json({ ok: false, error: 'No active timer for this output' });
     return;
   }
 
-  if (serial && serial.sendCommand(cmd)) {
-    res.json({ sent: true, cmd });
+  clearTimeout(timer.timerId);
+  activeTimers.delete(output);
+
+  // Turn off the output that was being held
+  const offValue = NUMERIC_OUTPUTS.includes(output) ? 0 : false;
+  sendToEsp({ action: 'set', output, value: offValue });
+
+  if (activeTimers.size === 0) {
+    sendToEsp({ action: 'release' });
+    stopKeepalive();
+  }
+
+  broadcastOverrides();
+  res.json({ ok: true, cancelled: output });
+});
+
+app.post('/api/command', (req, res) => {
+  const cmd: SerialCommand = req.body;
+
+  // ── Handle release: also clear all server-side timers
+  if (cmd.action === 'release') {
+    clearAllTimers();
+  }
+
+  // ── Handle timed set: register server-side timer
+  if (cmd.action === 'set' && cmd.duration && cmd.output) {
+    const now = Date.now();
+
+    // Cancel existing timer for this output if any
+    const existing = activeTimers.get(cmd.output);
+    if (existing) clearTimeout(existing.timerId);
+
+    const timerId = setTimeout(
+      () => handleTimerExpiry(cmd.output as keyof Outputs),
+      cmd.duration
+    );
+
+    activeTimers.set(cmd.output, {
+      output: cmd.output,
+      value: cmd.value!,
+      duration: cmd.duration,
+      startedAt: now,
+      expiresAt: now + cmd.duration,
+      timerId,
+    });
+
+    startKeepalive();
+    broadcastOverrides();
+    console.log(`[Timer] Started ${cmd.duration / 60000}m timer for ${cmd.output}`);
+  }
+
+  // ── Regular (non-timed) set on an output that has an active timer → cancel timer
+  if (cmd.action === 'set' && !cmd.duration && cmd.output && activeTimers.has(cmd.output)) {
+    const existing = activeTimers.get(cmd.output)!;
+    clearTimeout(existing.timerId);
+    activeTimers.delete(cmd.output);
+    if (activeTimers.size === 0) stopKeepalive();
+    broadcastOverrides();
+    console.log(`[Timer] Cancelled timer for ${cmd.output} (manual override)`);
+  }
+
+  // ── Forward to ESP32 (strip duration — firmware doesn't know about it)
+  const serialCmd: SerialCommand = { action: cmd.action };
+  if (cmd.output) serialCmd.output = cmd.output;
+  if (cmd.value !== undefined) serialCmd.value = cmd.value;
+
+  if (MOCK_MODE) {
+    console.log('[Mock] Command received:', serialCmd);
+    res.json({ sent: true, cmd: serialCmd, mock: true });
+    return;
+  }
+
+  if (serial && serial.sendCommand(serialCmd)) {
+    res.json({ sent: true, cmd: serialCmd });
   } else {
     res.status(503).json({ sent: false, error: 'Serial not connected' });
   }
@@ -132,6 +275,11 @@ io.on('connection', (socket) => {
   } else if (serial) {
     socket.emit('serialStatus', serial.getStatus());
   }
+  // Send current override timers to new connections
+  const overrides: TimedOverrideInfo[] = Array.from(activeTimers.values()).map(
+    ({ timerId, ...info }) => info
+  );
+  socket.emit('overrides', overrides);
 });
 
 httpServer.listen(PORT, () => {

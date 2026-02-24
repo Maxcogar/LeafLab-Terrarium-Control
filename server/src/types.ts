@@ -74,6 +74,15 @@ export interface SerialCommand {
   action: 'set' | 'release' | 'status' | 'reboot';
   output?: keyof Outputs;
   value?: number | boolean;
+  duration?: number; // ms - for timed overrides (server-managed)
+}
+
+export interface TimedOverrideInfo {
+  output: keyof Outputs;
+  value: number | boolean;
+  duration: number;
+  startedAt: number;
+  expiresAt: number;
 }
 
 export interface SerialResponse {
